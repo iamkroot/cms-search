@@ -1,5 +1,6 @@
+import shutil
 import requests
-
+from pathlib import Path
 from utils import config
 
 
@@ -18,7 +19,9 @@ class CMSScraper:
 
     ALLOWED_EXTS = (".doc", ".docx", ".pdf", ".pptx")
 
-    def __init__(self, address, wstoken):
+    def __init__(self, dl_root: Path, address, wstoken):
+        self.dl_root = dl_root
+        self.dl_root.mkdir(parents=True, exist_ok=True)
         self.REST_URL = address + "/webservice/rest/server.php"
         self.wstoken = wstoken
         self._userid = None
@@ -51,8 +54,47 @@ class CMSScraper:
     def enrolled_courses(self):
         return self.get("core_enrol_get_users_courses", {"userid": self.userid})
 
+    def get_course_contents(self, course_id):
+        return self.get("core_course_get_contents", {"courseid": course_id})
 
-if __name__ == '__main__':
-    from utils import pprint_json
-    scraper = CMSScraper(**config["MOODLE"])
-    pprint_json(scraper.enrolled_courses)
+    def download_course(self, course):
+        contents = self.get_course_contents(course["id"])
+        crs_fold = self.dl_root / course["fullname"]
+        crs_fold.mkdir(exist_ok=True)
+        for topic in contents:
+            modules = topic.get("modules")
+            if not modules:
+                continue
+            topic_fold = crs_fold / topic["name"]
+            topic_fold.mkdir(exist_ok=True)
+
+            for module in modules:
+                self.download_module(topic_fold, module)
+
+    def download_module(self, topic_fold: Path, module):
+        if module["modname"] != "resource":
+            # TODO: add support for folders
+            # skip folders, forums and other types of files
+            return
+        if not module["contents"]:
+            return
+        module_fold = topic_fold / module["name"]
+        module_fold.mkdir(exist_ok=True)
+        for content in module["contents"]:
+            file_path = module_fold / content["filename"]
+            self.download_file(file_path, content["fileurl"])
+
+    def download_file(self, file_path: Path, file_url):
+        with requests.get(file_url, params={"token": self.wstoken}, stream=True) as r:
+            r.raise_for_status()
+            with open(file_path, "wb") as f:
+                shutil.copyfileobj(r.raw, f)
+
+    def scrape(self):
+        for crs in self.enrolled_courses:
+            self.download_course(crs)
+
+
+if __name__ == "__main__":
+    scraper = CMSScraper(Path(config["PATHS"]["dl_root"]), **config["MOODLE"])
+    scraper.scrape()
