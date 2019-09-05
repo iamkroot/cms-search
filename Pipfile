@@ -12,6 +12,9 @@ nltk = "*"
 python-pptx = "*"
 docx2txt = "*"
 toml = "*"
+mongoengine = "*"
+python-dateutil = "*"
+dnspython = "*"
 
 [requires]
 python_version = "3.7"
