@@ -72,9 +72,9 @@ class CMSScraper:
                 self.download_module(topic_fold, module)
 
     def download_module(self, topic_fold: Path, module):
-        if module["modname"] != "resource":
-            # TODO: add support for folders
-            # skip folders, forums and other types of files
+        if module["modname"] not in ("resource", "folder"):
+            # TODO: Add support for forums
+            # skip forums and other types of files
             return
         if not module["contents"]:
             return
@@ -82,6 +82,9 @@ class CMSScraper:
         module_fold.mkdir(exist_ok=True)
         for content in module["contents"]:
             file_path = module_fold / content["filename"]
+            # TODO: Add support for archives
+            if file_path.suffix not in self.ALLOWED_EXTS:
+                continue
             self.download_file(file_path, content["fileurl"])
 
     def download_file(self, file_path: Path, file_url):
