@@ -15,6 +15,7 @@ toml = "*"
 mongoengine = "*"
 python-dateutil = "*"
 dnspython = "*"
+pathvalidate = "*"
 
 [requires]
 python_version = "3.7"

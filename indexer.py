@@ -1,5 +1,8 @@
 from datetime import datetime
 from pathlib import Path
+
+from pathvalidate import sanitize_filepath
+
 from cms_scraper import CMSScraper
 from database import Doc
 from utils import config
@@ -22,18 +25,19 @@ class Indexer:
             doc_paths = set(doc.file_path for doc in course_docs)
             for file in files:
                 file_path: Path = file["file_path"]
+                sanitized_path = sanitize_filepath(file_path)
                 if file_path.suffix not in self.ALLOWED_EXTS:
                     continue
-                if str(file_path) in doc_paths:
+                if sanitized_path in doc_paths:
                     # TODO: Also check updated_at of file
                     continue  # Already processed the file
                 print("\tDownloading", file_path.name, end='. ')
 
-                self.scraper.download_file(file_path, file["file_url"])
+                self.scraper.download_file(Path(sanitized_path), file["file_url"])
                 print("Done.")
                 # process(file['file_path'])  # Process the doc, store in JSON
                 doc = Doc(
-                    file_path=str(file_path),
+                    file_path=sanitized_path,
                     course=course_name,
                     downloaded_at=datetime.now(),
                 )
