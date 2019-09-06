@@ -5,7 +5,8 @@ from pathvalidate import sanitize_filepath
 
 from cms_scraper import CMSScraper
 from database import Doc
-from utils import config
+from extractor import process
+from utils import config, get_real_path
 
 
 class Indexer:
@@ -25,26 +26,26 @@ class Indexer:
             doc_paths = set(doc.file_path for doc in course_docs)
             for file in files:
                 file_path: Path = file["file_path"]
-                sanitized_path = sanitize_filepath(file_path)
+                sanitized_path = str(sanitize_filepath(file_path))
                 if file_path.suffix not in self.ALLOWED_EXTS:
                     continue
                 if sanitized_path in doc_paths:
                     # TODO: Also check updated_at of file
                     continue  # Already processed the file
                 print("\tDownloading", file_path.name, end='. ')
-
-                self.scraper.download_file(Path(sanitized_path), file["file_url"])
+                save_path = get_real_path(sanitized_path)
+                self.scraper.download_file(save_path, file["file_url"])
                 print("Done.")
-                # process(file['file_path'])  # Process the doc, store in JSON
+                sentences = process(save_path)  # Process the doc, store in JSON
                 doc = Doc(
                     file_path=sanitized_path,
                     course=course_name,
                     downloaded_at=datetime.now(),
                 )
                 doc.save()
-                self.add_to_index(doc)
+                self.add_to_index(doc, sentences)
 
-    def add_to_index(self, doc: Doc):
+    def add_to_index(self, doc: Doc, sentences):
         pass
 
 

@@ -1,5 +1,6 @@
 import json
 import toml
+from pathlib import Path
 
 
 def read_toml(path):
@@ -16,6 +17,10 @@ def read_toml(path):
 
 def pprint_json(data):
     print(json.dumps(data, indent=4))
+
+
+def get_real_path(file_path: Path) -> Path:
+    return Path(config['PATHS']['dl_root']) / file_path
 
 
 config = read_toml('config.toml')

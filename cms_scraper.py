@@ -88,11 +88,10 @@ class CMSScraper:
             }
 
     def download_file(self, file_path: Path, file_url):
-        dl_path = self.dl_root / file_path
-        dl_path.parent.mkdir(exist_ok=True, parents=True)
+        file_path.parent.mkdir(exist_ok=True, parents=True)
         with requests.get(file_url, params={"token": self.wstoken}, stream=True) as r:
             r.raise_for_status()
-            with open(dl_path, "wb") as f:
+            with open(file_path, "wb") as f:
                 shutil.copyfileobj(r.raw, f)
 
 
