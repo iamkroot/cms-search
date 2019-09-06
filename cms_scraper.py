@@ -17,8 +17,6 @@ class CMSError(Exception):
 class CMSScraper:
     """Uses the Moodle API to scrape docs"""
 
-    ALLOWED_EXTS = (".doc", ".docx", ".pdf", ".pptx")
-
     def __init__(self, dl_root: Path, address, wstoken):
         self.dl_root = dl_root
         self.dl_root.mkdir(parents=True, exist_ok=True)
@@ -50,54 +48,54 @@ class CMSScraper:
             self._userid = self.get("core_webservice_get_site_info")["userid"]
         return self._userid
 
-    @property
-    def enrolled_courses(self):
+    def get_enrolled_courses(self):
         return self.get("core_enrol_get_users_courses", {"userid": self.userid})
 
-    def get_course_contents(self, course_id):
-        return self.get("core_course_get_contents", {"courseid": course_id})
+    def get_courses_docs(self):
+        """Return document links of all the courses offered."""
+        # For now, return docs of just the currently enrolled courses
+        for course in self.get_enrolled_courses():
+            yield course['fullname'], tuple(self.get_course_docs(course))
 
-    def download_course(self, course):
-        contents = self.get_course_contents(course["id"])
-        crs_fold = self.dl_root / course["fullname"]
-        crs_fold.mkdir(exist_ok=True)
+    def get_course_docs(self, course):
+        crs_fold = Path(course["fullname"])
+        contents = self.get("core_course_get_contents", {"courseid": course["id"]})
         for topic in contents:
             modules = topic.get("modules")
             if not modules:
                 continue
             topic_fold = crs_fold / topic["name"]
-            topic_fold.mkdir(exist_ok=True)
-
             for module in modules:
-                self.download_module(topic_fold, module)
+                yield from self.get_module(topic_fold, module)
 
-    def download_module(self, topic_fold: Path, module):
+    @staticmethod
+    def is_handout(module):
+        return 'handout' in module['name'].lower()
+
+    def get_module(self, topic_fold: Path, module):
         if module["modname"] not in ("resource", "folder"):
-            # TODO: Add support for forums
-            # skip forums and other types of files
-            return
-        if not module["contents"]:
+            return  # TODO: Add support for forums
+        if self.is_handout(module) or not module["contents"]:
             return
         module_fold = topic_fold / module["name"]
-        module_fold.mkdir(exist_ok=True)
         for content in module["contents"]:
-            file_path = module_fold / content["filename"]
-            # TODO: Add support for archives
-            if file_path.suffix not in self.ALLOWED_EXTS:
+            if content['type'] != 'file':
                 continue
-            self.download_file(file_path, content["fileurl"])
+            yield {
+                "file_path": module_fold / content["filename"],
+                "updated_at": content['timemodified'],
+                "file_url": content["fileurl"],
+            }
 
     def download_file(self, file_path: Path, file_url):
+        dl_path = self.dl_root / file_path
+        dl_path.parent.mkdir(exist_ok=True, parents=True)
         with requests.get(file_url, params={"token": self.wstoken}, stream=True) as r:
             r.raise_for_status()
-            with open(file_path, "wb") as f:
+            with open(dl_path, "wb") as f:
                 shutil.copyfileobj(r.raw, f)
-
-    def scrape(self):
-        for crs in self.enrolled_courses:
-            self.download_course(crs)
 
 
 if __name__ == "__main__":
     scraper = CMSScraper(Path(config["PATHS"]["dl_root"]), **config["MOODLE"])
-    scraper.scrape()
+    print(dict(scraper.get_courses_docs()))

@@ -2,15 +2,10 @@ import mongoengine as me
 from utils import config
 
 
-class Course(me.Document):
-    name = me.StringField()
-    documents = me.ListField(me.ReferenceField("Doc"))
-
-
 class Doc(me.Document):
-    _id = me.SequenceField()
+    _id = me.SequenceField(primary_key=True)
     file_path = me.StringField()
-    course = me.ReferenceField(Course)
+    course = me.StringField()
     num_terms = me.IntField()
     downloaded_at = me.DateTimeField()
 
