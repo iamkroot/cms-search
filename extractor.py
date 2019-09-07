@@ -17,6 +17,7 @@ def process_pptx(file_path: Path):
                 para_text = ''.join(run.text for run in paragraph.runs)
                 if para_text:
                     text_runs.append(para_text)
+    # print(len(text_runs))
     return text_runs
 
 
@@ -25,6 +26,8 @@ def process_word(file_path: Path):
 
 
 def process(file_path: Path):
+    data = {}
+    sentences = []
     if file_path.suffix == '.pptx':
         sentences = process_pptx(file_path)
         data = {
@@ -34,5 +37,5 @@ def process(file_path: Path):
 
     json_file = file_path.with_suffix('.json')
     with open(json_file, 'w') as f:
-        json.dump(f, data)
+        json.dump(data, f, indent=4 )
     return sentences

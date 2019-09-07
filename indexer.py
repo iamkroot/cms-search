@@ -1,10 +1,10 @@
 from datetime import datetime
 from pathlib import Path
-
+from preprocess import Preprocessor
 from pathvalidate import sanitize_filepath
 
 from cms_scraper import CMSScraper
-from database import Doc
+from database import Doc, Index, IndexEntry
 from extractor import process
 from utils import config, get_real_path
 
@@ -12,10 +12,11 @@ from utils import config, get_real_path
 class Indexer:
     """Generates and maintains the index in database."""
 
-    ALLOWED_EXTS = (".doc", ".docx", ".pdf", ".ppt", ".pptx")
-
+    # ALLOWED_EXTS = (".doc", ".docx", ".pdf", ".ppt", ".pptx")
+    ALLOWED_EXTS = [".pptx"]
     def __init__(self):
         self.scraper = CMSScraper(Path(config["PATHS"]["dl_root"]), **config["MOODLE"])
+        self.prep = Preprocessor()
 
     def update_index(self):
         for course_name, files in self.scraper.get_courses_docs():
@@ -28,6 +29,8 @@ class Indexer:
                 file_path: Path = file["file_path"]
                 sanitized_path = str(sanitize_filepath(file_path))
                 if file_path.suffix not in self.ALLOWED_EXTS:
+                    continue
+                if file_path.suffix != ".pptx":
                     continue
                 if sanitized_path in doc_paths:
                     # TODO: Also check updated_at of file
@@ -46,8 +49,31 @@ class Indexer:
                 self.add_to_index(doc, sentences)
 
     def add_to_index(self, doc: Doc, sentences):
-        pass
-
+        text = ""
+        for s in sentences:
+            text = text + " " + s
+        p_doc = self.prep.tokenize(text)
+        p_doc = self.prep.rem_stop(p_doc)
+        p_doc = self.prep.lemmatize(p_doc)
+        # print(len(p_doc))
+        dict = {}
+        for w in p_doc:
+            if w in dict.keys():
+                dict[w]=dict[w]+1
+            else:
+                dict[w] = 1
+        print("Number of unique words :",len(dict.keys()))
+        for key,tf in dict.items():
+            cnt = Index.objects(key=key).count()
+            ie = IndexEntry(doc=doc,tf=tf)
+            if cnt == 0:
+                new_ent = Index(key=key)
+                new_ent.documents = [ie]
+                new_ent.save()
+            else:
+                ent = Index.objects(key=key).first()
+                ent.update(add_to_set__documents = ie)
+                ent.save()
 
 if __name__ == "__main__":
     Indexer().update_index()
