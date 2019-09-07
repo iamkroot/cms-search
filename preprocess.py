@@ -1,5 +1,3 @@
-import nltk
-import glob
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem import WordNetLemmatizer
@@ -15,19 +13,6 @@ class Preprocessor:
         self.lemmatizer = WordNetLemmatizer()
         self.tokenizer = RegexpTokenizer(r'\w[\w-]+|\w[\w/]+')
         self.pattern = r"(?x)([A-Z]\.)+|\$?\d+(\.\d+)?%?|\w+([-']\w+)*|[+/\-@&*]"
-        self.filepath = './test_data'
-        self.fileNames = []
-        self.files = []
-
-    def extract_files(self):
-        direc = glob.glob(self.filepath + "/*.txt")
-        direc.sort()
-        self.fileNames = direc
-        contents = []
-        for d in direc:
-            f = open(d)
-            contents.append(f.read())
-        return contents
 
     def tokenize(self, sent):
         return self.tokenizer.tokenize(sent)
@@ -38,14 +23,8 @@ class Preprocessor:
     def rem_stop(self, tokens):
         return [w for w in tokens if "-" in w or w.lower() not in self.stop_words]
 
-    def preprocess(self):
-        files = self.extract_files()
-        # print(len(files), len(files[1]))
-        prep = []
-        for f in files:
-            p = []
-            p = self.tokenize(f)
-            p = self.rem_stop(p)
-            p = self.lemmatize(p)
-            prep.append(p)
-        print(prep[0])
+    def preprocess(self, sentences):
+        text = " ".join(sentences)
+        p_doc = self.tokenize(text)
+        p_doc = self.rem_stop(p_doc)
+        return self.lemmatize(p_doc)

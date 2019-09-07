@@ -1,11 +1,12 @@
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from preprocess import Preprocessor
 from pathvalidate import sanitize_filepath
 
 from cms_scraper import CMSScraper
 from database import Doc, Index, IndexEntry
-from extractor import process
+from extractor import extract_sentences
+from preprocess import Preprocessor
 from utils import config, get_real_path
 
 
@@ -13,7 +14,8 @@ class Indexer:
     """Generates and maintains the index in database."""
 
     # ALLOWED_EXTS = (".doc", ".docx", ".pdf", ".ppt", ".pptx")
-    ALLOWED_EXTS = [".pptx"]
+    ALLOWED_EXTS = (".pptx")
+
     def __init__(self):
         self.scraper = CMSScraper(Path(config["PATHS"]["dl_root"]), **config["MOODLE"])
         self.prep = Preprocessor()
@@ -30,16 +32,14 @@ class Indexer:
                 sanitized_path = str(sanitize_filepath(file_path))
                 if file_path.suffix not in self.ALLOWED_EXTS:
                     continue
-                if file_path.suffix != ".pptx":
-                    continue
                 if sanitized_path in doc_paths:
                     # TODO: Also check updated_at of file
                     continue  # Already processed the file
-                print("\tDownloading", file_path.name, end='. ')
+                print("\tDownloading", file_path.name, end=". ")
                 save_path = get_real_path(sanitized_path)
-                self.scraper.download_file(save_path, file["file_url"])
+                # self.scraper.download_file(save_path, file["file_url"])
                 print("Done.")
-                sentences = process(save_path)  # Process the doc, store in JSON
+                sentences = extract_sentences(save_path)
                 doc = Doc(
                     file_path=sanitized_path,
                     course=course_name,
@@ -49,31 +49,22 @@ class Indexer:
                 self.add_to_index(doc, sentences)
 
     def add_to_index(self, doc: Doc, sentences):
-        text = ""
-        for s in sentences:
-            text = text + " " + s
-        p_doc = self.prep.tokenize(text)
-        p_doc = self.prep.rem_stop(p_doc)
-        p_doc = self.prep.lemmatize(p_doc)
+        p_doc = self.prep.preprocess(sentences)
         # print(len(p_doc))
-        dict = {}
-        for w in p_doc:
-            if w in dict.keys():
-                dict[w]=dict[w]+1
-            else:
-                dict[w] = 1
-        print("Number of unique words :",len(dict.keys()))
-        for key,tf in dict.items():
+        word_freq = Counter(p_doc)
+        print("Number of unique words:", len(word_freq.keys()))
+        for key, tf in word_freq.items():
             cnt = Index.objects(key=key).count()
-            ie = IndexEntry(doc=doc,tf=tf)
+            ie = IndexEntry(doc=doc, tf=tf)
             if cnt == 0:
                 new_ent = Index(key=key)
                 new_ent.documents = [ie]
                 new_ent.save()
             else:
                 ent = Index.objects(key=key).first()
-                ent.update(add_to_set__documents = ie)
+                ent.update(add_to_set__documents=ie)
                 ent.save()
+
 
 if __name__ == "__main__":
     Indexer().update_index()
