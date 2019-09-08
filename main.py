@@ -1,6 +1,16 @@
-from preprocess import Preprocessor
-from database import Doc, Index, IndexEntry
+from queryprocess import QueryProcessor
 
-doc = Index.objects(key="i/o").first()
-if doc:
-    print(len(doc.documents))
+
+def main():
+    query = input("Enter a query: ")
+    qp = QueryProcessor()
+    answer = qp.process_query(query)
+    for ans in answer:
+        print(ans[0], "\n")
+        for s in ans[1]:
+            print(s[1], ".....", sep="")
+        print("\n", "\n")
+
+
+if __name__ == "__main__":
+    main()

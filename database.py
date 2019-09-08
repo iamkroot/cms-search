@@ -20,6 +20,5 @@ class Index(me.Document):
     documents = me.SortedListField(me.EmbeddedDocumentField(IndexEntry), ordering="doc")
 
 
-print("Connecting to database.", end=' ')
+print("Connecting to database.")
 me.connect(**config["DB"])
-print("Done.")

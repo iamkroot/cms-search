@@ -4,6 +4,15 @@ from pathlib import Path
 
 
 def read_toml(path):
+    """
+    Parse a TOML file for its contents.
+
+    Args:
+        path(str or Path): Location of the TOML file
+
+    Returns:
+        dict: Parsed contents of the file
+    """
     try:
         with open(path) as f:
             return toml.load(f)
@@ -16,11 +25,26 @@ def read_toml(path):
 
 
 def pprint_json(data):
+    """
+    Pretty format and print a json object
+
+    Args:
+        data(dict): The data to be printed
+    """
     print(json.dumps(data, indent=4))
 
 
 def get_real_path(file_path: Path) -> Path:
-    return Path(config['PATHS']['dl_root']) / file_path
+    """
+    Prepend the root folder of the download directory to the given path
+
+    Args:
+        file_path(Path): The relative path of the file
+
+    Returns:
+        Path: The absolute path where the file should be saved
+    """
+    return Path(config["PATHS"]["dl_root"]) / file_path
 
 
-config = read_toml('config.toml')
+config = read_toml("config.toml")

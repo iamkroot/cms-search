@@ -4,6 +4,12 @@ from pptx import Presentation
 
 
 def process_pptx(file_path: Path):
+    """ Extracts text from .pptx files
+    Args:
+        file_path(Path) : Path object that contains the file_path of the .pptx file
+    Returns:
+        list : The sentences extracted from the file
+    """
     prs = Presentation(file_path)
     text_runs = []
     for i, slide in enumerate(prs.slides):
@@ -24,6 +30,12 @@ def process_word(file_path: Path):
 
 
 def extract_sentences(file_path: Path):
+    """ Extract sentences from file and store in JSON
+    Args:
+        file_path(Path) : Path object that contains the path of the file
+    Returns:
+        list : List of all sentences extracted from the file
+    """
     data = {}
     sentences = []
     if file_path.suffix == ".pptx":
@@ -32,5 +44,5 @@ def extract_sentences(file_path: Path):
 
     json_file = file_path.with_suffix(".json")
     with open(json_file, "w") as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f, indent=4)  # Create/Dump json file with file's text
     return sentences
