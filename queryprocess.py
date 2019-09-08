@@ -1,3 +1,4 @@
+from collections import defaultdict
 from preprocess import Preprocessor
 from database import Index, Doc, IndexEntry
 import math
@@ -6,86 +7,73 @@ from pathlib import Path
 from nltk.corpus import wordnet as wn
 from nltk.corpus import genesis
 
+
 class QueryProcessor:
     """
         Class which contain methods to process the query and return the results
     """
+
     def __init__(self):
         self.prep = Preprocessor()
-        self.genesis_ic=wn.ic(genesis, False, 0.0)
+        self.genesis_ic = wn.ic(genesis, False, 0.0)
 
-    def query_prep(self,query):
-        q = self.prep.tokenize(query)
-        q = self.prep.rem_stop(q)
-        q = self.prep.lemmatize(q)
-        return q
+    def get_docs(self, query):
+        data = {}
+        tot_docs = Doc.objects().count()
+        for word in query:
+            ind = Index.objects(key=word).first()
+            if not ind:
+                continue
+            data[word] = {
+                'idf': math.log(tot_docs / len(ind.documents), 10),
+                'docs': ind.documents
+            }
+        return data
 
-
-    def get_docs(self,query):
-        docs = []
-        nq = []
-        idf = {}
-        cnt = Doc.objects().count()
-        for q in query:
-            ind = Index.objects(key=q).first()
-            if ind:
-                docs.append(ind.documents)
-                idf[q] = math.log(cnt/len(ind.documents),10)
-                nq.append(q)
-        return docs,idf,nq
-
-    def jc_sim(self,s,ref_words):
-        num=0
-        words=self.prep.tokenize(s)
-        words = self.prep.rem_stop(words)
-        words = self.prep.lemmatize(words)
-        l=max(len(ref_words),len(words))
+    def jc_sim(self, sent, ref_words):
+        sim = 0
+        words = self.prep.preprocess(sent)
         for w in words:
-          maxi=0
-          for w1 in wn.synsets(w):
-            for t in ref_words:
-              for w2 in wn.synsets(t):
-                if w1._pos in ('n','v','a','r') and w2._pos in ('n','v','a','r') and w1._pos==w2._pos:
-                  n=w1.jcn_similarity(w2,self.genesis_ic)
-                  if w1==w2 or n>1:
-                    maxi=maxi+10
-                  else:
-                    maxi=max(maxi,w1.jcn_similarity(w2,self.genesis_ic))
-          num=num+maxi
-        num=num/l
-        return num
+            maxi = 0
+            for w1 in wn.synsets(w):
+                for t in ref_words:
+                    for w2 in wn.synsets(t):
+                        if (
+                            w1._pos in ("n", "v", "a", "r")
+                            and w2._pos in ("n", "v", "a", "r")
+                            and w1._pos == w2._pos
+                        ):
+                            n = w1.jcn_similarity(w2, self.genesis_ic)
+                            if w1 == w2 or n > 1:
+                                maxi += 10
+                            else:
+                                maxi = max(maxi, n)
+            sim += maxi
+        return sim / max(len(ref_words), len(words))
 
-    def process_query(self,query):
-        query = self.query_prep(query)
-        docs,idf,query = self.get_docs(query)
-        rank = {}
-        for i in range(len(docs)):
-            q = query[i]
-            for d in docs[i]:
-                if d.doc in rank.keys():
-                    rank[d.doc] = rank[d.doc] + d.tf*idf[q]
-                else:
-                    rank[d.doc] = d.tf*idf[q]
-        rank = sorted(rank.items(), key=lambda kv: -kv[1])
-        if len(rank)>5:
-            rank = rank[:5]
-        ans=[]
-        for r in rank:
+    def fetch_top_n(self, query, n=5):
+        all_docs = self.get_docs(query)
+        ranks = defaultdict(int)
+        for word, data in all_docs.items():
+            for d in data['docs']:
+                ranks[d.doc] += d.tf * data['idf']
+        ranks = sorted(ranks.items(), key=lambda kv: -kv[1])
+        return list(ranks)[:n]
+
+    def process_query(self, query):
+        query = self.prep.preprocess(query)
+        ranks = self.fetch_top_n(query)
+        ans = []
+        for r in ranks:
             file_path = Path(r[0].file_path)
             # print(file_path.name,file_path.parent.parent.parent )
-            new_path = file_path.with_suffix('.json')
+            new_path = file_path.with_suffix(".json")
             new_path = "data/" + str(new_path)
-            with open(new_path,'r') as f:
-                data = json.load(f)["sentences"]
-                data = set(data)
-                sen = []
-                for s in data:
-                    sen.append((self.jc_sim(s,query),s))
-                best = sorted(sen, key=lambda x: -x[0])
-                if len(best) > 5:
-                    best=best[:5]
-                ans.append((file_path.name,file_path.parent.parent.parent,best))
-                # print("\n","\n")
+            with open(new_path, "r") as f:
+                data = set(json.load(f)["sentences"])
+                sen = tuple((self.jc_sim(s, query), s) for s in data)
+                best = tuple(sorted(sen, key=lambda x: -x[0]))[:5]
+                ans.append((file_path, best))
         return ans
 
 
@@ -94,7 +82,7 @@ if __name__ == "__main__":
     qp = QueryProcessor()
     answer = qp.process_query(query)
     for ans in answer:
-        print(ans[1],ans[0],'\n')
-        for s in ans[2]:
+        print(ans[0], "\n")
+        for s in ans[1]:
             print(s[1])
-        print('\n','\n')
+        print("\n", "\n")

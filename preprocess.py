@@ -23,8 +23,7 @@ class Preprocessor:
     def rem_stop(self, tokens):
         return [w for w in tokens if "-" in w or w.lower() not in self.stop_words]
 
-    def preprocess(self, sentences):
-        text = " ".join(sentences)
+    def preprocess(self, text):
         p_doc = self.tokenize(text)
         p_doc = self.rem_stop(p_doc)
         return self.lemmatize(p_doc)

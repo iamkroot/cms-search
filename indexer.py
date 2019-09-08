@@ -13,8 +13,7 @@ from utils import config, get_real_path
 class Indexer:
     """Generates and maintains the index in database."""
 
-    # ALLOWED_EXTS = (".doc", ".docx", ".pdf", ".ppt", ".pptx")
-    ALLOWED_EXTS = (".pptx")
+    ALLOWED_EXTS = (".doc", ".docx", ".pdf", ".ppt", ".pptx")
 
     def __init__(self):
         self.scraper = CMSScraper(Path(config["PATHS"]["dl_root"]), **config["MOODLE"])
@@ -49,8 +48,7 @@ class Indexer:
                 self.add_to_index(doc, sentences)
 
     def add_to_index(self, doc: Doc, sentences):
-        p_doc = self.prep.preprocess(sentences)
-        # print(len(p_doc))
+        p_doc = self.prep.preprocess(" ".join(sentences))
         word_freq = Counter(p_doc)
         print("Number of unique words:", len(word_freq.keys()))
         for key, tf in word_freq.items():
