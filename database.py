@@ -18,7 +18,9 @@ class IndexEntry(me.EmbeddedDocument):
 class Index(me.Document):
     key = me.StringField()
     documents = me.SortedListField(me.EmbeddedDocumentField(IndexEntry), ordering="doc")
-
+    meta  = {
+        'indexes' : ['#key']
+    }
 
 print("Connecting to database.")
 me.connect(**config["DB"])
