@@ -1,8 +1,0 @@
-The planets were thought by Ptolemy to orbit Earth in deferent and epicycle motions.
-Although the idea that the planets orbited the Sun had been suggested many times, it was not until the seventeenth century that this view was supported by evidence from the first telescopic astronomical observations, performed by Galileo Galilei.
-About the same time, by careful analysis of pre-telescopic observational data collected by Tycho Brahe, Johannes Kepler found the planets' orbits were elliptical rather than circular.
-As observational tools improved, astronomers saw that, like Earth, each of the planets rotated around an axis tilted with respect to its orbital pole, and some shared such features as ice caps and seasons.
-Since the dawn of the Space Age, close observation by space probes has found that Earth and the other planets share characteristics such as volcanism, hurricanes, tectonics, and even hydrology.
-Planets are generally divided into two main types: large low-density giant planets, and smaller rocky terrestrials.
-There are eight planets in the Solar System. In order of increasing distance from the Sun, they are the four terrestrials, Mercury, Venus, Earth, and Mars, then the four giant planets, Jupiter, Saturn, Uranus, and Neptune.
-Six of the planets are orbited by one or more natural satellites.
