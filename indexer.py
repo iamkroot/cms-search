@@ -13,10 +13,9 @@ from utils import get_config, get_real_path
 class Indexer:
     """Generates and maintains the index in database."""
 
-    ALLOWED_EXTS = (".doc", ".docx", ".pdf", ".pptx")
-
     def __init__(self):
         config = get_config()
+        self.ALLOWED_EXTS = config["INDEXER"]["allowed_exts"]
         self.scraper = CMSScraper(Path(config["PATHS"]["dl_root"]), **config["MOODLE"])
         self.prep = Preprocessor()
 

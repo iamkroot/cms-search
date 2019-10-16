@@ -5,6 +5,9 @@ wstoken = "368b1c8b11dce69420ca42ef45bdd1bc"  # Copy Moodle Mobile Web Service K
 [PATHS]
 dl_root = "data/"  # Folder to which the cms files are downloaded
 
+[INDEXER]
+allowed_exts = [".doc", ".docx", ".pdf", ".pptx"]
+
 [DB]
 db = "dbname"
 host = "mongodb+srv://<name>:<password>@cluster.mongodb.net/"

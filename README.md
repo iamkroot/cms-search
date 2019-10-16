@@ -8,6 +8,7 @@ Search engine built to enable users to query the various Word and Powerpoint fil
 * For each document, you are shown the 5 most similar sentences containing your query words
 * The index of documents is updated regularly and dynamically - no need to reconstruct it everytime
 * Backend in MongoDB for persisting the index
+* Fully documented code, viewable from [docs](docs/_build/html/index.html)
 
 ## How to run
 1. Clone this repo / click "Download as Zip" and extract the files.
@@ -20,7 +21,7 @@ Search engine built to enable users to query the various Word and Powerpoint fil
 	2. `>>> nltk.download("stopwords")`.
 	3. `>>> nltk.download("wordnet")`.
 	4. `>>> nltk.download("genesis")`.
-7. Install `catdoc` to enable extraction from `.doc` files using `apt install catdoc` (Ubuntu).
+7. [For doc support] Install `catdoc` to enable extraction from `.doc` files using `apt install catdoc` (Ubuntu). If you are on Windows, you can skip processing `doc` files by removing it from `ALLOWED_EXTS` in config file.
 
 To generate the index: `pipenv run python indexer.py`. It will go through all the enrolled courses in your CMS account, and if a new file is encountered, add it to the index after processing it.
 
