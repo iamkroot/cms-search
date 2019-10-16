@@ -1,6 +1,7 @@
 import json
 import subprocess as sp
 from pathlib import Path
+from docx import Document
 from pptx import Presentation
 from PyPDF2 import PdfFileReader
 from utils import clean_line
@@ -23,6 +24,23 @@ def process_doc(file_path: Path):
         print("Unable to process", file_path)
         print(e.strerror)
         return []
+
+
+def process_docx(file_path: Path):
+    """ Extracts text from .docx files
+    Args:
+        file_path(Path) : Path object that contains the file_path of the .docx file
+    Returns:
+        list : The sentences extracted from the file
+    """
+    doc = Document(file_path)
+    sentences = []
+    for para in doc.paragraphs:
+        for line in para.text.split("."):
+            line = clean_line(line)
+            if line:
+                sentences.append(line)
+    return sentences
 
 
 def process_pptx(file_path: Path):
@@ -60,7 +78,7 @@ def process_pdf(file_path: Path):
         for page in reader.pages:
             for line in page.extractText().splitlines():
                 line = clean_line(line)
-                if line not in ('', '?', '.', '-', ',', ':'):
+                if line not in ("", "?", ".", "-", ",", ":"):
                     sentences.append(line)
     return sentences
 
@@ -90,3 +108,4 @@ def extract_sentences(file_path: Path):
     with open(json_file, "w") as f:
         json.dump(data, f, indent=4)  # Create/Dump json file with file's text
     return sentences
+
