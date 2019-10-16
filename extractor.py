@@ -94,11 +94,13 @@ def extract_sentences(file_path: Path):
     if json_file.exists():
         with open(json_file) as f:
             return json.load(f)["sentences"]
-
+    sentences = None
     if file_path.suffix == ".pptx":
         sentences = process_pptx(file_path)
     elif file_path.suffix == ".doc":
         sentences = process_doc(file_path)
+    elif file_path.suffix == ".docx":
+        sentences = process_docx(file_path)
     elif file_path.suffix == ".pdf":
         sentences = process_pdf(file_path)
     if not sentences:
@@ -108,4 +110,3 @@ def extract_sentences(file_path: Path):
     with open(json_file, "w") as f:
         json.dump(data, f, indent=4)  # Create/Dump json file with file's text
     return sentences
-
