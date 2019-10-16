@@ -20,6 +20,7 @@ Search engine built to enable users to query the various Word and Powerpoint fil
 	2. `>>> nltk.download("stopwords")`.
 	3. `>>> nltk.download("wordnet")`.
 	4. `>>> nltk.download("genesis")`.
+7. Install `catdoc` to enable extraction from `.doc` files using `apt install catdoc` (Ubuntu).
 
 To generate the index: `pipenv run python indexer.py`. It will go through all the enrolled courses in your CMS account, and if a new file is encountered, add it to the index after processing it.
 

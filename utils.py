@@ -47,4 +47,17 @@ def get_real_path(file_path: Path) -> Path:
     return Path(config["PATHS"]["dl_root"]) / file_path
 
 
+def clean_line(line: str):
+    """
+    Sanitize the input line by removing extra whitespace characters.
+
+    Args:
+        line(str): The sentence to be cleaned
+
+    Return:
+        str: Sanitized sentence
+    """
+    return line.replace("\n", "").replace("\t", "").strip()
+
+
 config = read_toml("config.toml")

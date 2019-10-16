@@ -1,6 +1,8 @@
 import json
+import subprocess as sp
 from pathlib import Path
 from pptx import Presentation
+from utils import clean_line
 
 
 def process_pptx(file_path: Path):
@@ -25,8 +27,23 @@ def process_pptx(file_path: Path):
     return text_runs
 
 
-def process_word(file_path: Path):
-    pass
+def process_doc(file_path: Path):
+    """ Extracts text from .doc files
+    Args:
+        file_path(Path) : Path object that contains the file_path of the .doc file
+    Returns:
+        list : The sentences extracted from the file
+    """
+    try:
+
+        p = sp.run(["catdoc", str(file_path)], capture_output=True)
+        output = p.stdout.decode()
+        sentences = [clean_line(line) for line in output.split('\n\n') if line]
+        return sentences
+    except FileNotFoundError as e:
+        print("Unable to process", file_path)
+        print(e.strerror)
+        return []
 
 
 def extract_sentences(file_path: Path):
@@ -36,13 +53,19 @@ def extract_sentences(file_path: Path):
     Returns:
         list : List of all sentences extracted from the file
     """
-    data = {}
-    sentences = []
+    json_file = file_path.with_suffix(".json")
+    if json_file.exists():
+        with open(json_file) as f:
+            return json.load(f)['sentences']
+
     if file_path.suffix == ".pptx":
         sentences = process_pptx(file_path)
-        data = {"name": str(file_path), "sentences": sentences}
+    elif file_path.suffix == ".doc":
+        sentences = process_doc(file_path)
+    if not sentences:
+        return []
+    data = {"name": str(file_path), "sentences": sentences}
 
-    json_file = file_path.with_suffix(".json")
     with open(json_file, "w") as f:
         json.dump(data, f, indent=4)  # Create/Dump json file with file's text
     return sentences

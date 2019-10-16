@@ -14,7 +14,7 @@ class Indexer:
     """Generates and maintains the index in database."""
 
     # ALLOWED_EXTS = (".doc", ".docx", ".pdf", ".ppt", ".pptx")
-    ALLOWED_EXTS = (".pptx",)
+    ALLOWED_EXTS = (".pptx", ".doc")
 
     def __init__(self):
         self.scraper = CMSScraper(Path(config["PATHS"]["dl_root"]), **config["MOODLE"])
