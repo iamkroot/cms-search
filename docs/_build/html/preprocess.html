@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>preprocess module &#8212; CMS Search  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="queryprocess module" href="queryprocess.html" />
+    <link rel="prev" title="main module" href="main.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-preprocess">
+<span id="preprocess-module"></span><h1>preprocess module<a class="headerlink" href="#module-preprocess" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="preprocess.Preprocessor">
+<em class="property">class </em><code class="sig-prename descclassname">preprocess.</code><code class="sig-name descname">Preprocessor</code><a class="reference internal" href="_modules/preprocess.html#Preprocessor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#preprocess.Preprocessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Preprocessor class provides methods to tokenize, lemmatize and remove stopwords</p>
+<dl class="method">
+<dt id="preprocess.Preprocessor.lemmatize">
+<code class="sig-name descname">lemmatize</code><span class="sig-paren">(</span><em class="sig-param">tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/preprocess.html#Preprocessor.lemmatize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#preprocess.Preprocessor.lemmatize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns Base forms (lemmatizes) of input list of words
+:param tokens: List of tokens
+:type tokens: list</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>List of lemmatized tokens</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="preprocess.Preprocessor.preprocess">
+<code class="sig-name descname">preprocess</code><span class="sig-paren">(</span><em class="sig-param">text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/preprocess.html#Preprocessor.preprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#preprocess.Preprocessor.preprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preprocesses the input text
+:param text: Text to be pre-processed
+:type text: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>List of pre-processed tokens</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="preprocess.Preprocessor.rem_stop">
+<code class="sig-name descname">rem_stop</code><span class="sig-paren">(</span><em class="sig-param">tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/preprocess.html#Preprocessor.rem_stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#preprocess.Preprocessor.rem_stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes stop words from input tokens
+Args:
+tokens(list) : List of tokens
+Returns:
+list: List of tokens with stopwords removed</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="preprocess.Preprocessor.tokenize">
+<code class="sig-name descname">tokenize</code><span class="sig-paren">(</span><em class="sig-param">sent</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/preprocess.html#Preprocessor.tokenize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#preprocess.Preprocessor.tokenize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tokenizes the input into ref_words
+:param sent: Sentence to be tokenized
+:type sent: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>List of tokenized words</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">CMS Search</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="cms_scraper.html">cms_scraper module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">database module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extractor.html">extractor module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="indexer.html">indexer module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">preprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="queryprocess.html">queryprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="main.html" title="previous chapter">main module</a></li>
+      <li>Next: <a href="queryprocess.html" title="next chapter">queryprocess module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/preprocess.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

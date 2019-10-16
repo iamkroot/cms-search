@@ -1,0 +1,174 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>utils &#8212; CMS Search  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">toml</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">lru_cache</span>
+
+
+<div class="viewcode-block" id="read_toml"><a class="viewcode-back" href="../utils.html#utils.read_toml">[docs]</a><span class="k">def</span> <span class="nf">read_toml</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse a TOML file for its contents.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path(str or Path): Location of the TOML file</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Parsed contents of the file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">toml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Missing toml file at </span><span class="si">{path}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">toml</span><span class="o">.</span><span class="n">TomlDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Invalid TOML in file: </span><span class="si">{path}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Error (probably) in line </span><span class="si">{e.lineno}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_config"><a class="viewcode-back" href="../utils.html#utils.get_config">[docs]</a><span class="nd">@lru_cache</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">get_config</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">read_toml</span><span class="p">(</span><span class="s2">&quot;config.toml&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="pprint_json"><a class="viewcode-back" href="../utils.html#utils.pprint_json">[docs]</a><span class="k">def</span> <span class="nf">pprint_json</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pretty format and print a json object</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data(dict): The data to be printed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_real_path"><a class="viewcode-back" href="../utils.html#utils.get_real_path">[docs]</a><span class="k">def</span> <span class="nf">get_real_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prepend the root folder of the download directory to the given path</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        file_path(Path): The relative path of the file</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Path: The absolute path where the file should be saved</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">get_config</span><span class="p">()[</span><span class="s2">&quot;PATHS&quot;</span><span class="p">][</span><span class="s2">&quot;dl_root&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="n">file_path</span></div>
+
+
+<div class="viewcode-block" id="clean_line"><a class="viewcode-back" href="../utils.html#utils.clean_line">[docs]</a><span class="k">def</span> <span class="nf">clean_line</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sanitize the input line by removing extra whitespace characters.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        line(str): The sentence to be cleaned</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        str: Sanitized sentence</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">CMS Search</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cms_scraper.html">cms_scraper module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../database.html">database module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../extractor.html">extractor module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../indexer.html">indexer module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preprocess.html">preprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../queryprocess.html">queryprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

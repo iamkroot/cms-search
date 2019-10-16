@@ -1,0 +1,195 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>extractor module &#8212; CMS Search  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="indexer module" href="indexer.html" />
+    <link rel="prev" title="database module" href="database.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-extractor">
+<span id="extractor-module"></span><h1>extractor module<a class="headerlink" href="#module-extractor" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="extractor.extract_sentences">
+<code class="sig-prename descclassname">extractor.</code><code class="sig-name descname">extract_sentences</code><span class="sig-paren">(</span><em class="sig-param">file_path: pathlib.Path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/extractor.html#extract_sentences"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#extractor.extract_sentences" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract sentences from file and store in JSON
+:param file_path: Path object that contains the path of the file
+:type file_path: Path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>List of all sentences extracted from the file</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="extractor.process_doc">
+<code class="sig-prename descclassname">extractor.</code><code class="sig-name descname">process_doc</code><span class="sig-paren">(</span><em class="sig-param">file_path: pathlib.Path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/extractor.html#process_doc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#extractor.process_doc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts text from .doc files
+:param file_path: Path object that contains the file_path of the .doc file
+:type file_path: Path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The sentences extracted from the file</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="extractor.process_docx">
+<code class="sig-prename descclassname">extractor.</code><code class="sig-name descname">process_docx</code><span class="sig-paren">(</span><em class="sig-param">file_path: pathlib.Path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/extractor.html#process_docx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#extractor.process_docx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts text from .docx files
+:param file_path: Path object that contains the file_path of the .docx file
+:type file_path: Path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The sentences extracted from the file</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="extractor.process_pdf">
+<code class="sig-prename descclassname">extractor.</code><code class="sig-name descname">process_pdf</code><span class="sig-paren">(</span><em class="sig-param">file_path: pathlib.Path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/extractor.html#process_pdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#extractor.process_pdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts text from .pdf files
+:param file_path: Path object that contains the file_path of the .pdf file
+:type file_path: Path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The sentences extracted from the file</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="extractor.process_pptx">
+<code class="sig-prename descclassname">extractor.</code><code class="sig-name descname">process_pptx</code><span class="sig-paren">(</span><em class="sig-param">file_path: pathlib.Path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/extractor.html#process_pptx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#extractor.process_pptx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts text from .pptx files
+:param file_path: Path object that contains the file_path of the .pptx file
+:type file_path: Path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The sentences extracted from the file</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">CMS Search</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="cms_scraper.html">cms_scraper module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">database module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">extractor module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="indexer.html">indexer module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preprocess.html">preprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="queryprocess.html">queryprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="database.html" title="previous chapter">database module</a></li>
+      <li>Next: <a href="indexer.html" title="next chapter">indexer module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/extractor.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

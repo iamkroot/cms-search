@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>queryprocess module &#8212; CMS Search  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="utils module" href="utils.html" />
+    <link rel="prev" title="preprocess module" href="preprocess.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-queryprocess">
+<span id="queryprocess-module"></span><h1>queryprocess module<a class="headerlink" href="#module-queryprocess" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="queryprocess.QueryProcessor">
+<em class="property">class </em><code class="sig-prename descclassname">queryprocess.</code><code class="sig-name descname">QueryProcessor</code><a class="reference internal" href="_modules/queryprocess.html#QueryProcessor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#queryprocess.QueryProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class which contain methods to process the query and return the results</p>
+<dl class="method">
+<dt id="queryprocess.QueryProcessor.fetch_top_n">
+<code class="sig-name descname">fetch_top_n</code><span class="sig-paren">(</span><em class="sig-param">query</em>, <em class="sig-param">n=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/queryprocess.html#QueryProcessor.fetch_top_n"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#queryprocess.QueryProcessor.fetch_top_n" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the best n documents out of all based on the tf-idf score.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> (<em>str</em>) – Pre-processed query</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of relevant documents to be fetched</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The best n documents based on tf-idf score.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="queryprocess.QueryProcessor.get_docs">
+<code class="sig-name descname">get_docs</code><span class="sig-paren">(</span><em class="sig-param">query</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/queryprocess.html#QueryProcessor.get_docs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#queryprocess.QueryProcessor.get_docs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the mongodb objects of the query word that contains the inverted index list along with the tf of that word.
+idf is also calculated and stored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>query</strong> (<em>list</em>) – The preprocessed search query as a list of words.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>key is the query word and the value is an object with the word’s idf and the inverted index list.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="queryprocess.QueryProcessor.jc_sim">
+<code class="sig-name descname">jc_sim</code><span class="sig-paren">(</span><em class="sig-param">sent</em>, <em class="sig-param">ref_words</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/queryprocess.html#QueryProcessor.jc_sim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#queryprocess.QueryProcessor.jc_sim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate Similarity score between the query and a sentence of the document
+:param sent: Sentence from the document
+:type sent: str
+:param ref_words: Preprocessed Query</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Similarity score between the sentence and the query</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="queryprocess.QueryProcessor.process_query">
+<code class="sig-name descname">process_query</code><span class="sig-paren">(</span><em class="sig-param">query</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/queryprocess.html#QueryProcessor.process_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#queryprocess.QueryProcessor.process_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes and retrieves the result of the query</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>query</strong> (<em>str</em>) – The search query given by the user.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>It contians the document paths and the best 5 sentences for the corresponding document .</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">CMS Search</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="cms_scraper.html">cms_scraper module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">database module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extractor.html">extractor module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="indexer.html">indexer module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preprocess.html">preprocess module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">queryprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="preprocess.html" title="previous chapter">preprocess module</a></li>
+      <li>Next: <a href="utils.html" title="next chapter">utils module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/queryprocess.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

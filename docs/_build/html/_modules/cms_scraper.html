@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>cms_scraper &#8212; CMS Search  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for cms_scraper</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="k">import</span> <span class="n">get_config</span>
+
+
+<div class="viewcode-block" id="CMSError"><a class="viewcode-back" href="../cms_scraper.html#cms_scraper.CMSError">[docs]</a><span class="k">class</span> <span class="nc">CMSError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents an error from Moodle API&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span></div>
+
+
+<div class="viewcode-block" id="CMSScraper"><a class="viewcode-back" href="../cms_scraper.html#cms_scraper.CMSScraper">[docs]</a><span class="k">class</span> <span class="nc">CMSScraper</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Uses the Moodle API to scrape docs&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dl_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">wstoken</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dl_root</span> <span class="o">=</span> <span class="n">dl_root</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dl_root</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">REST_URL</span> <span class="o">=</span> <span class="n">address</span> <span class="o">+</span> <span class="s2">&quot;/webservice/rest/server.php&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wstoken</span> <span class="o">=</span> <span class="n">wstoken</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_userid</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="CMSScraper.make_req"><a class="viewcode-back" href="../cms_scraper.html#cms_scraper.CMSScraper.make_req">[docs]</a>    <span class="k">def</span> <span class="nf">make_req</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verb</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{},</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Function to make a request to moodle webservice API</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            verb(str): Type of request (get/post)</span>
+<span class="sd">            params(dict): Parameters of the request</span>
+<span class="sd">            data(dict) : Data to send as part of the request</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            response : Response of the request</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;wstoken&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">wstoken</span><span class="p">,</span> <span class="s2">&quot;moodlewsrestformat&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">}</span>
+        <span class="n">query_params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">verb</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">REST_URL</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;exception&quot;</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CMSError</span><span class="p">(</span><span class="n">resp</span><span class="p">[</span><span class="s2">&quot;message&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">resp</span></div>
+
+<div class="viewcode-block" id="CMSScraper.get"><a class="viewcode-back" href="../cms_scraper.html#cms_scraper.CMSScraper.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsfunc</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="sd">&quot;&quot;&quot;Function to make a get request to moodle Application</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            wsfunc (str): Web service function of moodle web services Application</span>
+<span class="sd">            params (dict): Parameters of the requests</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            response: Response of the request</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;wsfunction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">wsfunc</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_req</span><span class="p">(</span><span class="s2">&quot;get&quot;</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CMSScraper.post"><a class="viewcode-back" href="../cms_scraper.html#cms_scraper.CMSScraper.post">[docs]</a>    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsfunc</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{},</span> <span class="n">data</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="sd">&quot;&quot;&quot;Function to make a post request to moodle Application</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            wsfunc (str): Web service function of moodle web services Application</span>
+<span class="sd">            params (dict): Parameters of the requests</span>
+<span class="sd">            data (dict): Data to be sent as a part of the post request</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            response: Response of the request</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;wsfunction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">wsfunc</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_req</span><span class="p">(</span><span class="s2">&quot;post&quot;</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">userid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Function to retrieve the Moodle UserID of user whose WebService Token is given</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            string : Response with the user_id</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_userid</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_userid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;core_webservice_get_site_info&quot;</span><span class="p">)[</span><span class="s2">&quot;userid&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_userid</span>
+
+<div class="viewcode-block" id="CMSScraper.get_enrolled_courses"><a class="viewcode-back" href="../cms_scraper.html#cms_scraper.CMSScraper.get_enrolled_courses">[docs]</a>    <span class="k">def</span> <span class="nf">get_enrolled_courses</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;core_enrol_get_users_courses&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;userid&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">userid</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="CMSScraper.get_courses_docs"><a class="viewcode-back" href="../cms_scraper.html#cms_scraper.CMSScraper.get_courses_docs">[docs]</a>    <span class="k">def</span> <span class="nf">get_courses_docs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return document links of all the courses offered</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># For now, return docs of just the currently enrolled courses</span>
+        <span class="k">for</span> <span class="n">course</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_enrolled_courses</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">course</span><span class="p">[</span><span class="s2">&quot;fullname&quot;</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_course_docs</span><span class="p">(</span><span class="n">course</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="CMSScraper.get_course_docs"><a class="viewcode-back" href="../cms_scraper.html#cms_scraper.CMSScraper.get_course_docs">[docs]</a>    <span class="k">def</span> <span class="nf">get_course_docs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">course</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query the Moodle API and get all the documents in the course.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            course(dict): The course of which docs have to be fetched</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">crs_fold</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">course</span><span class="p">[</span><span class="s2">&quot;fullname&quot;</span><span class="p">])</span>
+        <span class="n">contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;core_course_get_contents&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;courseid&quot;</span><span class="p">:</span> <span class="n">course</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]})</span>
+        <span class="k">for</span> <span class="n">topic</span> <span class="ow">in</span> <span class="n">contents</span><span class="p">:</span>
+            <span class="n">modules</span> <span class="o">=</span> <span class="n">topic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;modules&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">modules</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">topic_fold</span> <span class="o">=</span> <span class="n">crs_fold</span> <span class="o">/</span> <span class="n">topic</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">modules</span><span class="p">:</span>
+                <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_module</span><span class="p">(</span><span class="n">topic_fold</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CMSScraper.is_handout"><a class="viewcode-back" href="../cms_scraper.html#cms_scraper.CMSScraper.is_handout">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">is_handout</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the given module is a handout.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if the module is a handout</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;handout&quot;</span> <span class="ow">in</span> <span class="n">module</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="CMSScraper.get_module"><a class="viewcode-back" href="../cms_scraper.html#cms_scraper.CMSScraper.get_module">[docs]</a>    <span class="k">def</span> <span class="nf">get_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic_fold</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">module</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get all the documents in the moodle.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            topic_fold(Path): Folder of the section containing the module</span>
+<span class="sd">            course(dict): The course of which docs have to be fetched</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">module</span><span class="p">[</span><span class="s2">&quot;modname&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;resource&quot;</span><span class="p">,</span> <span class="s2">&quot;folder&quot;</span><span class="p">):</span>
+            <span class="k">return</span>  <span class="c1"># TODO: Add support for forums</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_handout</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">module</span><span class="p">[</span><span class="s2">&quot;contents&quot;</span><span class="p">]:</span>
+            <span class="k">return</span>
+        <span class="n">module_fold</span> <span class="o">=</span> <span class="n">topic_fold</span> <span class="o">/</span> <span class="n">module</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">content</span> <span class="ow">in</span> <span class="n">module</span><span class="p">[</span><span class="s2">&quot;contents&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">content</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;file&quot;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">yield</span> <span class="p">{</span>
+                <span class="s2">&quot;file_path&quot;</span><span class="p">:</span> <span class="n">module_fold</span> <span class="o">/</span> <span class="n">content</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;updated_at&quot;</span><span class="p">:</span> <span class="n">content</span><span class="p">[</span><span class="s2">&quot;timemodified&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;file_url&quot;</span><span class="p">:</span> <span class="n">content</span><span class="p">[</span><span class="s2">&quot;fileurl&quot;</span><span class="p">],</span>
+            <span class="p">}</span></div>
+
+<div class="viewcode-block" id="CMSScraper.download_file"><a class="viewcode-back" href="../cms_scraper.html#cms_scraper.CMSScraper.download_file">[docs]</a>    <span class="k">def</span> <span class="nf">download_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">file_url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the file to disk.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            file_path(Path): Save path of the file</span>
+<span class="sd">            file_url(str): Location of the file as given by Moodle</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">file_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">file_url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">wstoken</span><span class="p">},</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">r</span><span class="p">:</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfileobj</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">raw</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">get_config</span><span class="p">()</span>
+    <span class="n">scraper</span> <span class="o">=</span> <span class="n">CMSScraper</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;PATHS&quot;</span><span class="p">][</span><span class="s2">&quot;dl_root&quot;</span><span class="p">]),</span> <span class="o">**</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;MOODLE&quot;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">scraper</span><span class="o">.</span><span class="n">get_courses_docs</span><span class="p">()))</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">CMS Search</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cms_scraper.html">cms_scraper module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../database.html">database module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../extractor.html">extractor module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../indexer.html">indexer module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preprocess.html">preprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../queryprocess.html">queryprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

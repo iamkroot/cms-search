@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>indexer &#8212; CMS Search  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for indexer</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">Counter</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">pathvalidate</span> <span class="k">import</span> <span class="n">sanitize_filepath</span>
+
+<span class="kn">from</span> <span class="nn">cms_scraper</span> <span class="k">import</span> <span class="n">CMSScraper</span>
+<span class="kn">from</span> <span class="nn">database</span> <span class="k">import</span> <span class="n">Doc</span><span class="p">,</span> <span class="n">Index</span><span class="p">,</span> <span class="n">IndexEntry</span><span class="p">,</span> <span class="n">connect</span> <span class="k">as</span> <span class="n">db_connect</span>
+<span class="kn">from</span> <span class="nn">extractor</span> <span class="k">import</span> <span class="n">extract_sentences</span>
+<span class="kn">from</span> <span class="nn">preprocess</span> <span class="k">import</span> <span class="n">Preprocessor</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="k">import</span> <span class="n">get_config</span><span class="p">,</span> <span class="n">get_real_path</span>
+
+
+<div class="viewcode-block" id="Indexer"><a class="viewcode-back" href="../indexer.html#indexer.Indexer">[docs]</a><span class="k">class</span> <span class="nc">Indexer</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generates and maintains the index in database.&quot;&quot;&quot;</span>
+
+    <span class="n">ALLOWED_EXTS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;.doc&quot;</span><span class="p">,</span> <span class="s2">&quot;.docx&quot;</span><span class="p">,</span> <span class="s2">&quot;.pdf&quot;</span><span class="p">,</span> <span class="s2">&quot;.pptx&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">get_config</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scraper</span> <span class="o">=</span> <span class="n">CMSScraper</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;PATHS&quot;</span><span class="p">][</span><span class="s2">&quot;dl_root&quot;</span><span class="p">]),</span> <span class="o">**</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;MOODLE&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prep</span> <span class="o">=</span> <span class="n">Preprocessor</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Indexer.update_index"><a class="viewcode-back" href="../indexer.html#indexer.Indexer.update_index">[docs]</a>    <span class="k">def</span> <span class="nf">update_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Function to download new files from CMS and add them to our MongoDB database</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">course_name</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scraper</span><span class="o">.</span><span class="n">get_courses_docs</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">files</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Checking&quot;</span><span class="p">,</span> <span class="n">course_name</span><span class="p">,</span> <span class="s2">&quot;for new docs.&quot;</span><span class="p">)</span>
+            <span class="n">course_docs</span> <span class="o">=</span> <span class="n">Doc</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">course</span><span class="o">=</span><span class="n">course_name</span><span class="p">)</span><span class="o">.</span><span class="n">only</span><span class="p">(</span>
+                <span class="s2">&quot;file_path&quot;</span>
+            <span class="p">)</span>  <span class="c1"># Get all the docs of the course</span>
+            <span class="n">doc_paths</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">file_path</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">course_docs</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+                <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;file_path&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ALLOWED_EXTS</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">sanitized_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
+                    <span class="n">sanitize_filepath</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+                <span class="p">)</span>  <span class="c1"># Remove illegal characters from the path</span>
+                <span class="k">if</span> <span class="n">sanitized_path</span> <span class="ow">in</span> <span class="n">doc_paths</span><span class="p">:</span>
+                    <span class="c1"># TODO: Also check updated_at of file</span>
+                    <span class="k">continue</span>  <span class="c1"># Already processed the file</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Downloading&quot;</span><span class="p">,</span> <span class="n">file_path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;. &quot;</span><span class="p">)</span>
+                <span class="n">save_path</span> <span class="o">=</span> <span class="n">get_real_path</span><span class="p">(</span><span class="n">sanitized_path</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scraper</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;file_url&quot;</span><span class="p">])</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Done.&quot;</span><span class="p">)</span>
+                <span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">sanitized_path</span><span class="p">,</span>
+                    <span class="n">course</span><span class="o">=</span><span class="n">course_name</span><span class="p">,</span>
+                    <span class="n">downloaded_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+                <span class="p">)</span>
+                <span class="n">doc</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>  <span class="c1"># Add the new doc to DB</span>
+                <span class="n">sentences</span> <span class="o">=</span> <span class="n">extract_sentences</span><span class="p">(</span><span class="n">save_path</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_to_index</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">sentences</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Indexer.add_to_index"><a class="viewcode-back" href="../indexer.html#indexer.Indexer.add_to_index">[docs]</a>    <span class="k">def</span> <span class="nf">add_to_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">Doc</span><span class="p">,</span> <span class="n">sentences</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Function to add terms of the newly downloaded file to the index along with their term frequencies</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            doc (Doc) : MongoDB document/object of the downloaded file</span>
+<span class="sd">            sentences (list) : Sentences extracted from the downloaded file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p_doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prep</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sentences</span><span class="p">))</span>
+        <span class="n">word_freq</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">p_doc</span><span class="p">)</span>  <span class="c1"># Prepare Hashmap with trem frequencies</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of unique words:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">word_freq</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">tf</span> <span class="ow">in</span> <span class="n">word_freq</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">cnt</span> <span class="o">=</span> <span class="n">Index</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="n">ie</span> <span class="o">=</span> <span class="n">IndexEntry</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="n">doc</span><span class="p">,</span> <span class="n">tf</span><span class="o">=</span><span class="n">tf</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cnt</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">new_ent</span> <span class="o">=</span> <span class="n">Index</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>  <span class="c1"># Create new index entry</span>
+                <span class="n">new_ent</span><span class="o">.</span><span class="n">documents</span> <span class="o">=</span> <span class="p">[</span><span class="n">ie</span><span class="p">]</span>
+                <span class="n">new_ent</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ent</span> <span class="o">=</span> <span class="n">Index</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+                <span class="n">ent</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                    <span class="n">add_to_set__documents</span><span class="o">=</span><span class="n">ie</span>
+                <span class="p">)</span>  <span class="c1"># Update document list in the Index Entry</span>
+                <span class="n">ent</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">db_connect</span><span class="p">()</span>
+    <span class="n">Indexer</span><span class="p">()</span><span class="o">.</span><span class="n">update_index</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">CMS Search</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cms_scraper.html">cms_scraper module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../database.html">database module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../extractor.html">extractor module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../indexer.html">indexer module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preprocess.html">preprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../queryprocess.html">queryprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,263 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>cms_scraper module &#8212; CMS Search  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="database module" href="database.html" />
+    <link rel="prev" title="Welcome to cms-search’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-cms_scraper">
+<span id="cms-scraper-module"></span><h1>cms_scraper module<a class="headerlink" href="#module-cms_scraper" title="Permalink to this headline">¶</a></h1>
+<dl class="exception">
+<dt id="cms_scraper.CMSError">
+<em class="property">exception </em><code class="sig-prename descclassname">cms_scraper.</code><code class="sig-name descname">CMSError</code><span class="sig-paren">(</span><em class="sig-param">msg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cms_scraper.html#CMSError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cms_scraper.CMSError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Represents an error from Moodle API</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cms_scraper.CMSScraper">
+<em class="property">class </em><code class="sig-prename descclassname">cms_scraper.</code><code class="sig-name descname">CMSScraper</code><span class="sig-paren">(</span><em class="sig-param">dl_root: pathlib.Path</em>, <em class="sig-param">address</em>, <em class="sig-param">wstoken</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cms_scraper.html#CMSScraper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cms_scraper.CMSScraper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Uses the Moodle API to scrape docs</p>
+<dl class="method">
+<dt id="cms_scraper.CMSScraper.download_file">
+<code class="sig-name descname">download_file</code><span class="sig-paren">(</span><em class="sig-param">file_path: pathlib.Path</em>, <em class="sig-param">file_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cms_scraper.html#CMSScraper.download_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cms_scraper.CMSScraper.download_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the file to disk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_path</strong> (<em>Path</em>) – Save path of the file</p></li>
+<li><p><strong>file_url</strong> (<em>str</em>) – Location of the file as given by Moodle</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="cms_scraper.CMSScraper.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param">wsfunc</em>, <em class="sig-param">params={}</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cms_scraper.html#CMSScraper.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cms_scraper.CMSScraper.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to make a get request to moodle Application</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wsfunc</strong> (<em>str</em>) – Web service function of moodle web services Application</p></li>
+<li><p><strong>params</strong> (<em>dict</em>) – Parameters of the requests</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Response of the request</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>response</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="cms_scraper.CMSScraper.get_course_docs">
+<code class="sig-name descname">get_course_docs</code><span class="sig-paren">(</span><em class="sig-param">course</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cms_scraper.html#CMSScraper.get_course_docs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cms_scraper.CMSScraper.get_course_docs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query the Moodle API and get all the documents in the course.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>course</strong> (<em>dict</em>) – The course of which docs have to be fetched</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="cms_scraper.CMSScraper.get_courses_docs">
+<code class="sig-name descname">get_courses_docs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cms_scraper.html#CMSScraper.get_courses_docs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cms_scraper.CMSScraper.get_courses_docs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return document links of all the courses offered</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cms_scraper.CMSScraper.get_enrolled_courses">
+<code class="sig-name descname">get_enrolled_courses</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cms_scraper.html#CMSScraper.get_enrolled_courses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cms_scraper.CMSScraper.get_enrolled_courses" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cms_scraper.CMSScraper.get_module">
+<code class="sig-name descname">get_module</code><span class="sig-paren">(</span><em class="sig-param">topic_fold: pathlib.Path</em>, <em class="sig-param">module</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cms_scraper.html#CMSScraper.get_module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cms_scraper.CMSScraper.get_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the documents in the moodle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>topic_fold</strong> (<em>Path</em>) – Folder of the section containing the module</p></li>
+<li><p><strong>course</strong> (<em>dict</em>) – The course of which docs have to be fetched</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="cms_scraper.CMSScraper.is_handout">
+<em class="property">static </em><code class="sig-name descname">is_handout</code><span class="sig-paren">(</span><em class="sig-param">module</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="_modules/cms_scraper.html#CMSScraper.is_handout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cms_scraper.CMSScraper.is_handout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the given module is a handout.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if the module is a handout</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="cms_scraper.CMSScraper.make_req">
+<code class="sig-name descname">make_req</code><span class="sig-paren">(</span><em class="sig-param">verb</em>, <em class="sig-param">params={}</em>, <em class="sig-param">data=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cms_scraper.html#CMSScraper.make_req"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cms_scraper.CMSScraper.make_req" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to make a request to moodle webservice API</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>verb</strong> (<em>str</em>) – Type of request (get/post)</p></li>
+<li><p><strong>params</strong> (<em>dict</em>) – Parameters of the request</p></li>
+<li><p><strong>data</strong> (<em>dict</em>) – Data to send as part of the request</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Response of the request</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>response</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="cms_scraper.CMSScraper.post">
+<code class="sig-name descname">post</code><span class="sig-paren">(</span><em class="sig-param">wsfunc</em>, <em class="sig-param">params={}</em>, <em class="sig-param">data={}</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cms_scraper.html#CMSScraper.post"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cms_scraper.CMSScraper.post" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to make a post request to moodle Application</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wsfunc</strong> (<em>str</em>) – Web service function of moodle web services Application</p></li>
+<li><p><strong>params</strong> (<em>dict</em>) – Parameters of the requests</p></li>
+<li><p><strong>data</strong> (<em>dict</em>) – Data to be sent as a part of the post request</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Response of the request</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>response</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="cms_scraper.CMSScraper.userid">
+<em class="property">property </em><code class="sig-name descname">userid</code><a class="headerlink" href="#cms_scraper.CMSScraper.userid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to retrieve the Moodle UserID of user whose WebService Token is given
+:returns: Response with the user_id
+:rtype: string</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">CMS Search</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">cms_scraper module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">database module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extractor.html">extractor module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="indexer.html">indexer module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preprocess.html">preprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="queryprocess.html">queryprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to cms-search’s documentation!</a></li>
+      <li>Next: <a href="database.html" title="next chapter">database module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/cms_scraper.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

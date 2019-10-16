@@ -1,0 +1,230 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>queryprocess &#8212; CMS Search  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for queryprocess</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">preprocess</span> <span class="k">import</span> <span class="n">Preprocessor</span>
+<span class="kn">from</span> <span class="nn">database</span> <span class="k">import</span> <span class="n">Index</span><span class="p">,</span> <span class="n">Doc</span><span class="p">,</span> <span class="n">IndexEntry</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">nltk.corpus</span> <span class="k">import</span> <span class="n">wordnet</span> <span class="k">as</span> <span class="n">wn</span>
+<span class="kn">from</span> <span class="nn">nltk.corpus</span> <span class="k">import</span> <span class="n">genesis</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="k">import</span> <span class="n">get_real_path</span>
+
+
+<div class="viewcode-block" id="QueryProcessor"><a class="viewcode-back" href="../queryprocess.html#queryprocess.QueryProcessor">[docs]</a><span class="k">class</span> <span class="nc">QueryProcessor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Class which contain methods to process the query and return the results</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prep</span> <span class="o">=</span> <span class="n">Preprocessor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genesis_ic</span> <span class="o">=</span> <span class="n">wn</span><span class="o">.</span><span class="n">ic</span><span class="p">(</span><span class="n">genesis</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="QueryProcessor.get_docs"><a class="viewcode-back" href="../queryprocess.html#queryprocess.QueryProcessor.get_docs">[docs]</a>    <span class="k">def</span> <span class="nf">get_docs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Retrieve the mongodb objects of the query word that contains the inverted index list along with the tf of that word.</span>
+<span class="sd">            idf is also calculated and stored.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                query (list): The preprocessed search query as a list of words.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                dict: key is the query word and the value is an object with the word&#39;s idf and the inverted index list.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">tot_docs</span> <span class="o">=</span> <span class="n">Doc</span><span class="o">.</span><span class="n">objects</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">query</span><span class="p">:</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">Index</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">word</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ind</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">word</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;idf&quot;</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                    <span class="n">tot_docs</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="o">.</span><span class="n">documents</span><span class="p">),</span> <span class="mi">10</span>
+                <span class="p">),</span>  <span class="c1"># calculate idf of the query word</span>
+                <span class="s2">&quot;docs&quot;</span><span class="p">:</span> <span class="n">ind</span><span class="o">.</span><span class="n">documents</span><span class="p">,</span>  <span class="c1"># Documents which contain word</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
+<div class="viewcode-block" id="QueryProcessor.jc_sim"><a class="viewcode-back" href="../queryprocess.html#queryprocess.QueryProcessor.jc_sim">[docs]</a>    <span class="k">def</span> <span class="nf">jc_sim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sent</span><span class="p">,</span> <span class="n">ref_words</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate Similarity score between the query and a sentence of the document</span>
+<span class="sd">        Args:</span>
+<span class="sd">            sent(str) : Sentence from the document</span>
+<span class="sd">            ref_words : Preprocessed Query</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            int : Similarity score between the sentence and the query</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sim</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prep</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">words</span><span class="p">:</span>
+            <span class="n">maxi</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">w1</span> <span class="ow">in</span> <span class="n">wn</span><span class="o">.</span><span class="n">synsets</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ref_words</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">w2</span> <span class="ow">in</span> <span class="n">wn</span><span class="o">.</span><span class="n">synsets</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="p">(</span>
+                            <span class="n">w1</span><span class="o">.</span><span class="n">_pos</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+                            <span class="ow">and</span> <span class="n">w2</span><span class="o">.</span><span class="n">_pos</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+                            <span class="ow">and</span> <span class="n">w1</span><span class="o">.</span><span class="n">_pos</span> <span class="o">==</span> <span class="n">w2</span><span class="o">.</span><span class="n">_pos</span>
+                        <span class="p">):</span>
+                            <span class="n">n</span> <span class="o">=</span> <span class="n">w1</span><span class="o">.</span><span class="n">jcn_similarity</span><span class="p">(</span>
+                                <span class="n">w2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genesis_ic</span>
+                            <span class="p">)</span>  <span class="c1"># calculate Jiang Conrath Similarity between two words</span>
+                            <span class="k">if</span> <span class="n">w1</span> <span class="o">==</span> <span class="n">w2</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                                <span class="n">maxi</span> <span class="o">+=</span> <span class="mi">10</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">maxi</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">maxi</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="n">sim</span> <span class="o">+=</span> <span class="n">maxi</span>
+        <span class="k">return</span> <span class="n">sim</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ref_words</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="QueryProcessor.fetch_top_n"><a class="viewcode-back" href="../queryprocess.html#queryprocess.QueryProcessor.fetch_top_n">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_top_n</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Fetch the best n documents out of all based on the tf-idf score.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                query (str): Pre-processed query</span>
+<span class="sd">                n (int) : The number of relevant documents to be fetched</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                list : The best n documents based on tf-idf score.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">all_docs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_docs</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">ranks</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">word</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">all_docs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;docs&quot;</span><span class="p">]:</span>
+                <span class="n">ranks</span><span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">doc</span><span class="p">]</span> <span class="o">+=</span> <span class="n">d</span><span class="o">.</span><span class="n">tf</span> <span class="o">*</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;idf&quot;</span><span class="p">]</span>
+        <span class="n">ranks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ranks</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="o">-</span><span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">ranks</span><span class="p">)[:</span><span class="n">n</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="QueryProcessor.process_query"><a class="viewcode-back" href="../queryprocess.html#queryprocess.QueryProcessor.process_query">[docs]</a>    <span class="k">def</span> <span class="nf">process_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Computes and retrieves the result of the query</span>
+
+<span class="sd">             Args:</span>
+<span class="sd">                query (str): The search query given by the user.</span>
+
+<span class="sd">             Returns:</span>
+<span class="sd">                list : It contians the document paths and the best 5 sentences for the corresponding document .</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prep</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">ranks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_top_n</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">ans</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ranks</span><span class="p">:</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">file_path</span><span class="p">)</span>
+            <span class="c1"># print(file_path.name,file_path.parent.parent.parent )</span>
+            <span class="n">new_path</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">)</span>
+            <span class="n">new_path</span> <span class="o">=</span> <span class="n">get_real_path</span><span class="p">(</span><span class="n">new_path</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">new_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)[</span><span class="s2">&quot;sentences&quot;</span><span class="p">])</span>
+                <span class="n">sen</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">jc_sim</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">query</span><span class="p">),</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+                <span class="n">best</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">sen</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]))[</span>
+                    <span class="p">:</span><span class="mi">5</span>
+                <span class="p">]</span>  <span class="c1"># Slice top five sentences</span>
+                <span class="n">ans</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">file_path</span><span class="p">,</span> <span class="n">best</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">ans</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">CMS Search</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cms_scraper.html">cms_scraper module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../database.html">database module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../extractor.html">extractor module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../indexer.html">indexer module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preprocess.html">preprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../queryprocess.html">queryprocess module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
