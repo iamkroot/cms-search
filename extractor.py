@@ -2,7 +2,27 @@ import json
 import subprocess as sp
 from pathlib import Path
 from pptx import Presentation
+from PyPDF2 import PdfFileReader
 from utils import clean_line
+
+
+def process_doc(file_path: Path):
+    """ Extracts text from .doc files
+    Args:
+        file_path(Path) : Path object that contains the file_path of the .doc file
+    Returns:
+        list : The sentences extracted from the file
+    """
+    try:
+
+        p = sp.run(["catdoc", str(file_path)], capture_output=True)
+        output = p.stdout.decode()
+        sentences = [clean_line(line) for line in output.split("\n\n") if line]
+        return sentences
+    except FileNotFoundError as e:
+        print("Unable to process", file_path)
+        print(e.strerror)
+        return []
 
 
 def process_pptx(file_path: Path):
@@ -27,23 +47,22 @@ def process_pptx(file_path: Path):
     return text_runs
 
 
-def process_doc(file_path: Path):
-    """ Extracts text from .doc files
+def process_pdf(file_path: Path):
+    """ Extracts text from .pdf files
     Args:
-        file_path(Path) : Path object that contains the file_path of the .doc file
+        file_path(Path) : Path object that contains the file_path of the .pdf file
     Returns:
         list : The sentences extracted from the file
     """
-    try:
-
-        p = sp.run(["catdoc", str(file_path)], capture_output=True)
-        output = p.stdout.decode()
-        sentences = [clean_line(line) for line in output.split('\n\n') if line]
-        return sentences
-    except FileNotFoundError as e:
-        print("Unable to process", file_path)
-        print(e.strerror)
-        return []
+    sentences = []
+    with open(file_path, "rb") as f:
+        reader = PdfFileReader(f)
+        for page in reader.pages:
+            for line in page.extractText().splitlines():
+                line = clean_line(line)
+                if line not in ('', '?', '.', '-', ',', ':'):
+                    sentences.append(line)
+    return sentences
 
 
 def extract_sentences(file_path: Path):
@@ -56,12 +75,14 @@ def extract_sentences(file_path: Path):
     json_file = file_path.with_suffix(".json")
     if json_file.exists():
         with open(json_file) as f:
-            return json.load(f)['sentences']
+            return json.load(f)["sentences"]
 
     if file_path.suffix == ".pptx":
         sentences = process_pptx(file_path)
     elif file_path.suffix == ".doc":
         sentences = process_doc(file_path)
+    elif file_path.suffix == ".pdf":
+        sentences = process_pdf(file_path)
     if not sentences:
         return []
     data = {"name": str(file_path), "sentences": sentences}
