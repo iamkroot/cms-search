@@ -3,7 +3,10 @@ import subprocess as sp
 from pathlib import Path
 from docx import Document
 from pptx import Presentation
-from PyPDF2 import PdfFileReader
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.converter import PDFPageAggregator
+from pdfminer.layout import LAParams, LTTextBox
+from pdfminer.pdfpage import PDFPage
 from utils import clean_line
 
 
@@ -74,12 +77,16 @@ def process_pdf(file_path: Path):
     """
     sentences = []
     with open(file_path, "rb") as f:
-        reader = PdfFileReader(f)
-        for page in reader.pages:
-            for line in page.extractText().splitlines():
-                line = clean_line(line)
-                if line not in ("", "?", ".", "-", ",", ":"):
-                    sentences.append(line)
+        resmgr = PDFResourceManager()
+        laparams = LAParams()
+        device = PDFPageAggregator(resmgr, laparams=laparams)
+        interpreter = PDFPageInterpreter(resmgr, device)
+        for page in PDFPage.get_pages(f, caching=True, check_extractable=True):
+            interpreter.process_page(page)
+            layout = device.get_result()
+            for lt_obj in layout:
+                if isinstance(lt_obj, LTTextBox):
+                    sentences.append(clean_line(lt_obj.get_text()))
     return sentences
 
 

@@ -16,7 +16,7 @@ mongoengine = "*"
 python-dateutil = "*"
 dnspython = "*"
 pathvalidate = "*"
-pypdf2 = "*"
+"pdfminer.six" = "*"
 
 [requires]
 python_version = "3.7"
