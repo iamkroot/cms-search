@@ -4,10 +4,10 @@ from pathlib import Path
 from pathvalidate import sanitize_filepath
 
 from cms_scraper import CMSScraper
-from database import Doc, Index, IndexEntry
+from database import Doc, Index, IndexEntry, connect as db_connect
 from extractor import extract_sentences
 from preprocess import Preprocessor
-from utils import config, get_real_path
+from utils import get_config, get_real_path
 
 
 class Indexer:
@@ -16,6 +16,7 @@ class Indexer:
     ALLOWED_EXTS = (".doc", ".docx", ".pdf", ".pptx")
 
     def __init__(self):
+        config = get_config()
         self.scraper = CMSScraper(Path(config["PATHS"]["dl_root"]), **config["MOODLE"])
         self.prep = Preprocessor()
 
@@ -79,4 +80,5 @@ class Indexer:
 
 
 if __name__ == "__main__":
+    db_connect()
     Indexer().update_index()

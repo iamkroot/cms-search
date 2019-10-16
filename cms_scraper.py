@@ -1,7 +1,7 @@
 import shutil
 import requests
 from pathlib import Path
-from utils import config
+from utils import get_config
 
 
 class CMSError(Exception):
@@ -156,5 +156,6 @@ class CMSScraper:
 
 
 if __name__ == "__main__":
+    config = get_config()
     scraper = CMSScraper(Path(config["PATHS"]["dl_root"]), **config["MOODLE"])
     print(dict(scraper.get_courses_docs()))

@@ -1,5 +1,5 @@
 import mongoengine as me
-from utils import config
+from utils import get_config
 
 
 class Doc(me.Document):
@@ -18,9 +18,9 @@ class IndexEntry(me.EmbeddedDocument):
 class Index(me.Document):
     key = me.StringField()
     documents = me.SortedListField(me.EmbeddedDocumentField(IndexEntry), ordering="doc")
-    meta  = {
-        'indexes' : ['#key']
-    }
+    meta = {"indexes": ["#key"]}
 
-print("Connecting to database.")
-me.connect(**config["DB"])
+
+def connect():
+    print("Connecting to database.")
+    me.connect(**get_config()["DB"])

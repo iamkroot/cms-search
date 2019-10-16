@@ -1,4 +1,5 @@
 from queryprocess import QueryProcessor
+from database import connect as db_connect
 
 
 def main():
@@ -13,4 +14,5 @@ def main():
 
 
 if __name__ == "__main__":
+    db_connect()
     main()

@@ -1,6 +1,7 @@
 import json
 import toml
 from pathlib import Path
+from functools import lru_cache
 
 
 def read_toml(path):
@@ -24,6 +25,11 @@ def read_toml(path):
     exit(1)
 
 
+@lru_cache()
+def get_config():
+    return read_toml("config.toml")
+
+
 def pprint_json(data):
     """
     Pretty format and print a json object
@@ -44,7 +50,7 @@ def get_real_path(file_path: Path) -> Path:
     Returns:
         Path: The absolute path where the file should be saved
     """
-    return Path(config["PATHS"]["dl_root"]) / file_path
+    return Path(get_config()["PATHS"]["dl_root"]) / file_path
 
 
 def clean_line(line: str):
@@ -58,6 +64,3 @@ def clean_line(line: str):
         str: Sanitized sentence
     """
     return line.replace("\n", "").replace("\t", "").strip()
-
-
-config = read_toml("config.toml")
